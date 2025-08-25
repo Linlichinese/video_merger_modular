@@ -1,0 +1,6 @@
+PyQt5>=5.15.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+imageio-ffmpeg>=0.4.0
+Pillow>=8.0.0
+psutil>=5.8.0
