@@ -85,6 +85,12 @@ class VideoMergerApp(QMainWindow):
         self.tab_widget.addTab(self.simple_split_tab, "✂️ 视频分割")
         self._setup_simple_split_signals()
         
+        # 创建自动模式标签页
+        from .auto_mode_tab import AutoModeTab
+        self.auto_mode_tab = AutoModeTab(self.batch_processor)
+        self.tab_widget.addTab(self.auto_mode_tab, "🔄 自动模式")
+        self._setup_auto_mode_signals()
+        
         # 创建隐藏的进度条和按钮（兼容性，但不显示）
         self._create_progress_bar(main_layout)
         self._create_buttons(main_layout)
@@ -534,6 +540,9 @@ class VideoMergerApp(QMainWindow):
             self.start_merge_processing()
         elif current_tab_index == 1:  # 分割标签页
             self.start_split_processing()
+        elif current_tab_index == 2:  # 自动模式标签页
+            # 自动模式有自己的启动逻辑，在其内部处理
+            pass
     
     def start_merge_processing(self):
         """开始视频合成处理"""
@@ -1829,6 +1838,10 @@ class VideoMergerApp(QMainWindow):
                 self.simple_split_tab.on_split_completed()
                 print("[MainWindow] 通知分割标签页完成")
         
+        elif current_tab_index == 2:  # 自动模式标签页
+            # 自动模式有自己的完成处理逻辑，无需在这里处理
+            print("[MainWindow] 自动模式标签页处理完成通知")
+        
         self.reset_ui()
         
         # 增强的完成提示系统
@@ -1913,6 +1926,11 @@ class VideoMergerApp(QMainWindow):
         self.simple_split_tab.pause_split_requested.connect(self._on_simple_split_pause)
         self.simple_split_tab.resume_split_requested.connect(self._on_simple_split_resume)
         self.simple_split_tab.cancel_split_requested.connect(self._on_simple_split_cancel)
+    
+    def _setup_auto_mode_signals(self):
+        """设置自动模式标签页的信号连接"""
+        self.auto_mode_tab.pipeline_started.connect(self._on_auto_mode_pipeline_started)
+        self.auto_mode_tab.pipeline_stopped.connect(self._on_auto_mode_pipeline_stopped)
     
     def _on_unified_batch_start(self, process_type, settings):
         """统一批处理开始回调"""
@@ -2140,3 +2158,13 @@ class VideoMergerApp(QMainWindow):
         """简化分割取消回调"""
         self.batch_processor.cancel_batch()
         self.simple_split_tab.on_split_cancelled()
+    
+    def _on_auto_mode_pipeline_started(self):
+        """自动模式流水线启动回调"""
+        # 这里可以添加全局状态更新，比如禁用其他标签页等
+        print("[MainWindow] 自动模式流水线已启动")
+    
+    def _on_auto_mode_pipeline_stopped(self):
+        """自动模式流水线停止回调"""
+        # 这里可以添加全局状态更新，比如重新启用其他标签页等
+        print("[MainWindow] 自动模式流水线已停止")
