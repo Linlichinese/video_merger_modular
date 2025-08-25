@@ -37,19 +37,22 @@ def setup_logging():
 
 def check_dependencies():
     """检查必要的依赖"""
-    required_modules = [
-        'PyQt5',
-        'numpy',
-        'opencv-python',
-        'imageio-ffmpeg'
-    ]
+    # 模块包名和导入名的映射
+    required_modules = {
+        'PyQt5': 'PyQt5',
+        'numpy': 'numpy',
+        'opencv-python': 'cv2',
+        'imageio-ffmpeg': 'imageio_ffmpeg',
+        'Pillow': 'PIL',
+        'psutil': 'psutil'
+    }
     
     missing_modules = []
-    for module in required_modules:
+    for package_name, import_name in required_modules.items():
         try:
-            __import__(module.replace('-', '_'))
+            __import__(import_name)
         except ImportError:
-            missing_modules.append(module)
+            missing_modules.append(package_name)
     
     if missing_modules:
         print("缺少以下依赖模块:")
