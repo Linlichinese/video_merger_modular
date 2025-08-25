@@ -29,22 +29,40 @@ class PipelineConfig:
     # 分割配置
     split_duration_range: tuple            # (min_seconds, max_seconds)
     split_resolution: Optional[str]        # "1920x1080" or None for original
-    split_bitrate: str                     # "4000k"
-    split_quality: str                     # "high"/"medium"/"low"
-    split_delete_original: bool            # 是否删除原文件
+    split_bitrate: Optional[str]           # "5000k" or None for original
+    split_quality: str                     # "高质量", "中等质量", "快速"
+    delete_original_after_split: bool      # 分割后删除原文件
     
     # 合成配置
-    merge_videos_per_output: int           # 每个输出视频包含的片段数
-    merge_total_outputs: int               # 总输出视频数
-    merge_resolution: str                  # "1920x1080"
-    merge_bitrate: str                     # "5000k"
-    merge_audio_settings: dict             # 音频设置
-    merge_reuse_material: bool             # 是否重复使用素材
+    merge_clips_per_video: int             # 每个合成视频的片段数
+    merge_output_count: int                # 输出视频数量
+    merge_allow_reuse: bool                # 允许素材重复使用
+    merge_audio_enabled: bool              # 启用音频
+    merge_resolution: Optional[str]        # 合成输出分辨率
+    merge_bitrate: Optional[str]           # 合成输出码率
     
     # 全局配置
     input_folders: list                    # 输入文件夹列表
-    output_folder: str                     # 输出文件夹路径
-    use_gpu: bool                         # 是否使用GPU加速
+    split_output_folder: str               # 分割输出文件夹
+    merge_output_folder: str               # 合成输出文件夹
+    use_gpu: bool                          # 是否使用GPU加速
+
+
+@dataclass
+class PipelineProgress:
+    """流水线进度数据结构"""
+    current_state: PipelineState
+    split_progress: float                  # 分割阶段进度 0.0-1.0
+    merge_progress: float                  # 合成阶段进度 0.0-1.0
+    overall_progress: float               # 整体进度 0.0-1.0
+    current_task: str                     # 当前任务描述
+    estimated_time_remaining: Optional[int]  # 预估剩余时间(秒)
+    
+    # 详细进度信息
+    split_completed_folders: int          # 已完成分割的文件夹数
+    split_total_folders: int              # 总文件夹数
+    merge_completed_folders: int          # 已完成合成的文件夹数
+    merge_total_folders: int              # 需要合成的文件夹数
 
 
 class StateTransitionManager:
@@ -162,3 +180,49 @@ class StateTransitionManager:
             'current_duration': self.get_state_duration(self.current_state),
             'state_history': [state.value for state in self.state_history]
         }
+
+
+# 重命名为PipelineStateManager以匹配导入
+PipelineStateManager = StateTransitionManager
+
+
+def create_default_config() -> PipelineConfig:
+    """创建默认的流水线配置"""
+    return PipelineConfig(
+        # 分割配置
+        split_duration_range=(2, 4),
+        split_resolution=None,  # 保持原分辨率
+        split_bitrate=None,     # 保持原码率
+        split_quality="中等质量",
+        delete_original_after_split=False,
+        
+        # 合成配置
+        merge_clips_per_video=3,
+        merge_output_count=5,
+        merge_allow_reuse=True,
+        merge_audio_enabled=True,
+        merge_resolution=None,  # 保持原分辨率
+        merge_bitrate=None,     # 保持原码率
+        
+        # 全局配置
+        input_folders=[],
+        split_output_folder="",
+        merge_output_folder="",
+        use_gpu=True
+    )
+
+
+def create_progress(state: PipelineState) -> PipelineProgress:
+    """创建默认的进度对象"""
+    return PipelineProgress(
+        current_state=state,
+        split_progress=0.0,
+        merge_progress=0.0,
+        overall_progress=0.0,
+        current_task="准备中...",
+        estimated_time_remaining=None,
+        split_completed_folders=0,
+        split_total_folders=0,
+        merge_completed_folders=0,
+        merge_total_folders=0
+    )
